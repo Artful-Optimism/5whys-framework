@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5 Whys Root Cause Framework v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #2c2c34;
+    --bg-deep: #22222a;
+    --ink: #ede8df;
+    --mid: #9a9488;
+    --accent: #e84c1e;
+    --yellow: #f5c842;
+    --teal: #2a9d8f;
+    --purple: #7c5cbf;
+    --card: #34343e;
+    --border: #42424e;
+
+    /* depth gradient colors for the why chain */
+    --w1: #3a2a4a;
+    --w2: #2a1f5a;
+    --w3: #1a2060;
+    --w4: #142060;
+    --w5: #0e2458;
+
+    --w1-accent: #9b7fd4;
+    --w2-accent: #7b7edc;
+    --w3-accent: #5a8ae0;
+    --w4-accent: #3a9ae0;
+    --w5-accent: #2aade0;
+  }
+
+  body {
+    background: #18181f;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 20px;
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    width: 960px;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── BIG BACKGROUND "WHY" WATERMARK ── */
+  .watermark {
+    position: absolute;
+    top: -20px;
+    right: -30px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 520px;
+    line-height: 1;
+    color: rgba(255,255,255,0.035);
+    pointer-events: none;
+    user-select: none;
+    letter-spacing: -0.02em;
+    z-index: 0;
+  }
+
+  .page > * { position: relative; z-index: 1; }
+
+  /* ── HERO HEADER ── */
+  .hero {
+    padding: 44px 52px 36px;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    align-items: end;
+    background: linear-gradient(135deg, #2c2c34 0%, #252530 100%);
+  }
+
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 88px;
+    line-height: 0.92;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .title-the {
+    display: inline;
+  }
+
+  .hero-title .highlight {
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+
+
+  .hero-sub {
+    margin-top: 14px;
+    font-size: 15px;
+    color: var(--mid);
+    max-width: 480px;
+    line-height: 1.55;
+    font-weight: 400;
+  }
+
+  .hero-sub strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .hero-badge {
+    background: var(--accent);
+    padding: 18px 24px;
+    text-align: center;
+    align-self: flex-start;
+    flex-shrink: 0;
+  }
+
+  .hero-badge .num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px;
+    line-height: 1;
+    color: white;
+  }
+
+  .hero-badge .label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.75);
+    margin-top: 2px;
+  }
+
+  /* ── PULL QUOTE ── */
+  .pull-quote {
+    background: #1e1e26;
+    border-left: 4px solid var(--yellow);
+    padding: 18px 52px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .pull-quote .pq-mark {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 64px;
+    line-height: 0.8;
+    color: var(--yellow);
+    opacity: 0.4;
+    flex-shrink: 0;
+  }
+
+  .pull-quote .pq-text {
+    font-size: 15.5px;
+    font-style: italic;
+    color: var(--ink);
+    line-height: 1.45;
+    font-weight: 400;
+  }
+
+  .pull-quote .pq-text em {
+    font-style: normal;
+    color: var(--yellow);
+    font-weight: 600;
+  }
+
+  /* ── MAIN BODY ── */
+  .body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .col {
+    padding: 32px 36px;
+  }
+
+  .col-left {
+    border-right: 1px solid var(--border);
+  }
+
+  .col-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── WHY CHAIN ── */
+  .why-chain { display: flex; flex-direction: column; gap: 0; }
+
+  .why-step {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    position: relative;
+  }
+
+  .why-track {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 48px;
+    flex-shrink: 0;
+  }
+
+  .why-dot {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    border-radius: 2px;
+  }
+
+  .why-step.step-start .why-dot {
+    background: var(--accent);
+    color: white;
+    font-size: 18px;
+  }
+
+  .why-step.step-1 .why-dot { background: var(--w1); color: var(--w1-accent); border: 1px solid var(--w1-accent); }
+  .why-step.step-2 .why-dot { background: var(--w2); color: var(--w2-accent); border: 1px solid var(--w2-accent); }
+  .why-step.step-3 .why-dot { background: var(--w3); color: var(--w3-accent); border: 1px solid var(--w3-accent); }
+  .why-step.step-4 .why-dot { background: var(--w4); color: var(--w4-accent); border: 1px solid var(--w4-accent); }
+  .why-step.step-5 .why-dot { background: var(--w5); color: var(--w5-accent); border: 1px solid var(--w5-accent); }
+
+  .why-line {
+    width: 2px;
+    flex: 1;
+    min-height: 10px;
+  }
+
+  .why-step.step-start .why-line { background: linear-gradient(to bottom, var(--accent), var(--w1-accent)); }
+  .why-step.step-1 .why-line { background: linear-gradient(to bottom, var(--w1-accent), var(--w2-accent)); }
+  .why-step.step-2 .why-line { background: linear-gradient(to bottom, var(--w2-accent), var(--w3-accent)); }
+  .why-step.step-3 .why-line { background: linear-gradient(to bottom, var(--w3-accent), var(--w4-accent)); }
+  .why-step.step-4 .why-line { background: linear-gradient(to bottom, var(--w4-accent), var(--w5-accent)); }
+  .why-step.step-5 .why-line { display: none; }
+
+  .why-content {
+    flex: 1;
+    padding: 4px 0 18px 14px;
+  }
+
+  .why-badge {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+
+  .why-step.step-start .why-badge { background: rgba(232,76,30,0.2); color: var(--accent); }
+  .why-step.step-1 .why-badge { background: rgba(155,127,212,0.15); color: var(--w1-accent); }
+  .why-step.step-2 .why-badge { background: rgba(123,126,220,0.15); color: var(--w2-accent); }
+  .why-step.step-3 .why-badge { background: rgba(90,138,224,0.15); color: var(--w3-accent); }
+  .why-step.step-4 .why-badge { background: rgba(58,154,224,0.15); color: var(--w4-accent); }
+  .why-step.step-5 .why-badge { background: rgba(42,173,224,0.15); color: var(--w5-accent); }
+
+  .why-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.3;
+    margin-bottom: 3px;
+  }
+
+  .why-desc {
+    font-size: 12px;
+    color: var(--mid);
+    line-height: 1.45;
+  }
+
+  .root-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--yellow);
+    color: #111;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    margin-top: 6px;
+    font-weight: 600;
+  }
+
+  /* ── STRATEGY COLUMN ── */
+  .strategy-card {
+    background: #2a2a34;
+    border: 1px solid var(--border);
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+
+  .strategy-card:last-child { margin-bottom: 0; }
+
+  .sc-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .sc-icon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    border-radius: 2px;
+  }
+
+  .sc-icon.red { background: rgba(232,76,30,0.15); color: var(--accent); }
+  .sc-icon.yellow { background: rgba(245,200,66,0.15); color: var(--yellow); }
+  .sc-icon.teal { background: rgba(42,157,143,0.15); color: var(--teal); }
+
+  .sc-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+  }
+
+  .sc-body {
+    font-size: 12px;
+    color: var(--mid);
+    line-height: 1.55;
+  }
+
+  .sc-body strong { color: var(--ink); font-weight: 600; }
+
+  .sc-body .example-line {
+    display: block;
+    margin-top: 8px;
+    background: #1e1e28;
+    border-left: 3px solid var(--border);
+    padding: 7px 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10.5px;
+    color: var(--mid);
+    line-height: 1.4;
+  }
+
+  .sc-body .example-line .strike {
+    text-decoration: line-through;
+    opacity: 0.5;
+  }
+
+  .sc-body .example-line .better {
+    color: var(--teal);
+    font-weight: 500;
+  }
+
+  .power-move-card {
+    background: #1e2a28;
+    border: 2px solid var(--teal);
+    padding: 18px 20px;
+    margin-top: 14px;
+  }
+
+  .pm-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .pm-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--teal);
+    border-radius: 50%;
+  }
+
+  .pm-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 0.06em;
+    color: var(--teal);
+  }
+
+  .pm-quote {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink);
+    background: rgba(42,157,143,0.08);
+    padding: 9px 12px;
+    border-left: 3px solid var(--teal);
+    line-height: 1.45;
+    margin-bottom: 8px;
+  }
+
+  .pm-desc {
+    font-size: 11.5px;
+    color: var(--mid);
+    line-height: 1.5;
+  }
+
+  .pm-desc em {
+    font-style: normal;
+    color: var(--ink);
+  }
+
+  /* ── EXAMPLE STRIP ── */
+  .example-strip {
+    border-top: 1px solid var(--border);
+    padding: 28px 52px;
+    background: #28282f;
+  }
+
+  .example-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .example-tag {
+    background: var(--accent);
+    color: white;
+    font-family: 'DM Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .example-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  /* Vertical journey instead of cramped horizontal */
+  .journey {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    position: relative;
+  }
+
+  .journey::before {
+    content: '';
+    position: absolute;
+    top: 22px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: linear-gradient(to right, var(--accent), var(--w1-accent), var(--w3-accent), var(--teal), var(--yellow));
+    z-index: 0;
+  }
+
+  .journey-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 8px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .js-dot {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+    border: 2px solid transparent;
+  }
+
+  .journey-step:nth-child(1) .js-dot { background: #1e1e26; border-color: var(--accent); color: var(--accent); }
+  .journey-step:nth-child(2) .js-dot { background: var(--w1); border-color: var(--w1-accent); color: var(--w1-accent); }
+  .journey-step:nth-child(3) .js-dot { background: var(--w3); border-color: var(--w3-accent); color: var(--w3-accent); }
+  .journey-step:nth-child(4) .js-dot { background: var(--teal); border-color: var(--teal); color: white; }
+  .journey-step:nth-child(5) .js-dot { background: var(--yellow); border-color: var(--yellow); color: #111; }
+
+  .js-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 5px;
+  }
+
+  .journey-step:nth-child(1) .js-label { color: var(--accent); }
+  .journey-step:nth-child(2) .js-label { color: var(--w1-accent); }
+  .journey-step:nth-child(3) .js-label { color: var(--w3-accent); }
+  .journey-step:nth-child(4) .js-label { color: var(--teal); }
+  .journey-step:nth-child(5) .js-label { color: #c8960a; }
+
+  .js-text {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink);
+    text-align: center;
+    line-height: 1.35;
+  }
+
+  /* Result + lesson row */
+  .result-row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    margin-top: 22px;
+    align-items: center;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .result-stat {
+    background: #1e1e26;
+    border: 1px solid var(--border);
+    padding: 12px 20px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .result-stat .big-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 44px;
+    line-height: 1;
+    color: var(--yellow);
+  }
+
+  .result-stat .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin-top: 2px;
+  }
+
+  .result-lesson {
+    font-size: 12.5px;
+    color: var(--mid);
+    line-height: 1.6;
+  }
+
+  .result-lesson strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding: 16px 52px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #26262e;
+  }
+
+  .footer-left {
+    font-size: 11px;
+    color: var(--mid);
+    line-height: 1.6;
+  }
+
+  .footer-left .handle {
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .footer-right {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .prompt-tag {
+    background: #34343e;
+    border: 1px solid #4a4a58;
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    padding: 5px 10px;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+
+  @media print {
+    body { background: var(--bg); padding: 0; margin: 0; }
+    .page { width: 100%; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="watermark">WHY</div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow">Root Cause Framework</div>
+      <div class="hero-title">THE <span class="highlight">5&nbsp;WHYS</span></div>
+      <p class="hero-sub">Most teams jump straight to solutions. The 5 Whys forces you to <strong>slow down and drill</strong> — past the symptom, past the assumption, all the way to what's actually broken.</p>
+    </div>
+    <div class="hero-badge">
+      <div class="num">5×</div>
+      <div class="label">Ask Why</div>
+    </div>
+  </div>
+
+  <!-- PULL QUOTE -->
+  <div class="pull-quote">
+    <div class="pq-mark">"</div>
+    <div class="pq-text" style="white-space: nowrap;">The obvious fixes — lower prices, add features, hire more people — would've been <em>expensive band-aids.</em><br>The 5 Whys found the real lever.</div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- LEFT: Framework Chain -->
+    <div class="col col-left">
+      <div class="col-label">The Framework — Drill Until It's Actionable</div>
+      <div class="why-chain">
+
+        <div class="why-step step-start">
+          <div class="why-track">
+            <div class="why-dot">!</div>
+            <div class="why-line"></div>
+          </div>
+          <div class="why-content">
+            <div class="why-badge">Start here</div>
+            <div class="why-title">Problem Statement</div>
+            <div class="why-desc">Define it clearly. Vague problems get vague answers — be specific about what's broken and when it started.</div>
+          </div>
+        </div>
+
+        <div class="why-step step-1">
+          <div class="why-track">
+            <div class="why-dot">W1</div>
+            <div class="why-line"></div>
+          </div>
+          <div class="why-content">
+            <div class="why-badge">Why #1</div>
+            <div class="why-title">Why did this happen?</div>
+            <div class="why-desc">First answer is almost always a symptom. You're still on the surface — keep going.</div>
+          </div>
+        </div>
+
+        <div class="why-step step-2">
+          <div class="why-track">
+            <div class="why-dot">W2</div>
+            <div class="why-line"></div>
+          </div>
+          <div class="why-content">
+            <div class="why-badge">Why #2</div>
+            <div class="why-title">Why did that cause exist?</div>
+            <div class="why-desc">You're moving from people to process. Hidden assumptions start cracking open here.</div>
+          </div>
+        </div>
+
+        <div class="why-step step-3">
+          <div class="why-track">
+            <div class="why-dot">W3</div>
+            <div class="why-line"></div>
+          </div>
+          <div class="why-content">
+            <div class="why-badge">Why #3</div>
+            <div class="why-title">Why does the underlying issue exist?</div>
+            <div class="why-desc">This is where "we can't do X because of budget" gets reframed — the real block is usually how decisions get made.</div>
+          </div>
+        </div>
+
+        <div class="why-step step-4">
+          <div class="why-track">
+            <div class="why-dot">W4</div>
+            <div class="why-line"></div>
+          </div>
+          <div class="why-content">
+            <div class="why-badge">Why #4</div>
+            <div class="why-title">Why is that systemic issue in place?</div>
+            <div class="why-desc">Competing priorities surface here — two goals pulling in opposite directions, never openly acknowledged.</div>
+          </div>
+        </div>
+
+        <div class="why-step step-5">
+          <div class="why-track">
+            <div class="why-dot">W5</div>
+            <div class="why-line"></div>
+          </div>
+          <div class="why-content">
+            <div class="why-badge">Why #5 — Root Cause</div>
+            <div class="why-title">Why hasn't this been fixed before?</div>
+            <div class="why-desc">The answer here should be actionable — not just explainable. If you can't act on it, keep drilling.</div>
+            <div class="root-tag">✓ Actionable Root Cause</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: Strategic Application -->
+    <div class="col col-right">
+      <div class="col-label">Strategic Application — 3 Things It Forces You To See</div>
+
+      <div class="strategy-card">
+        <div class="sc-header">
+          <div class="sc-icon red">→</div>
+          <div class="sc-title">Systems, Not People</div>
+        </div>
+        <div class="sc-body">
+          Blame shuts down learning. Reframe every question away from individuals and toward structure.
+          <span class="example-line">
+            <span class="strike">"Why did John miss the deadline?"</span><br>
+            <span class="better">→ "Why do deadlines get missed in our org?"</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="strategy-card">
+        <div class="sc-header">
+          <div class="sc-icon yellow">◈</div>
+          <div class="sc-title">Hidden Assumptions</div>
+        </div>
+        <div class="sc-body">
+          Every "why" cracks open something the team assumed was fixed, funded, or solved. When someone says <strong>"we can't do X — budget constraints,"</strong> keep asking. The real block is rarely money. It's how budget decisions get made — and that's fixable.
+        </div>
+      </div>
+
+      <div class="strategy-card">
+        <div class="sc-header">
+          <div class="sc-icon teal">⇄</div>
+          <div class="sc-title">Competing Priorities</div>
+        </div>
+        <div class="sc-body">
+          Most strategic problems aren't failures — they're <strong>tensions.</strong> Two objectives pulling against each other, never openly acknowledged. The 5 Whys surfaces those conflicts so leadership can actually deal with them instead of patching symptoms forever.
+        </div>
+      </div>
+
+      <div class="power-move-card">
+        <div class="pm-header">
+          <div class="pm-dot"></div>
+          <div class="pm-title">The Power Move — Add This After Every Why</div>
+        </div>
+        <div class="pm-quote">"What would have to be true for this problem not to exist?"</div>
+        <div class="pm-desc">This reframes the conversation from <em>what broke</em> to <em>what has to change.</em> Done right, it doesn't just fix a problem — it forces teams to question how the whole system operates. That's where <em>sustainable competitive advantage</em> comes from. Not the quick fix. The real one.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- EXAMPLE STRIP -->
+  <div class="example-strip">
+    <div class="example-header">
+      <div class="example-tag">Real World · SaaS Churn</div>
+      <div class="example-title">Churn jumped from 5% → 12%. Five whys revealed it was never a product problem.</div>
+    </div>
+
+    <div class="journey">
+      <div class="journey-step">
+        <div class="js-dot">!</div>
+        <div class="js-label">Problem</div>
+        <div class="js-text">Churn spiked to 12% in 6 months</div>
+      </div>
+      <div class="journey-step">
+        <div class="js-dot">W1</div>
+        <div class="js-label">Why #1</div>
+        <div class="js-text">Product not delivering expected value</div>
+      </div>
+      <div class="journey-step">
+        <div class="js-dot">W2–3</div>
+        <div class="js-label">Why #2–3</div>
+        <div class="js-text">Key features unknown and unused by customers</div>
+      </div>
+      <div class="journey-step">
+        <div class="js-dot">W4–5</div>
+        <div class="js-label">Root Cause</div>
+        <div class="js-text">Sales & CS had misaligned incentives from day one</div>
+      </div>
+      <div class="journey-step">
+        <div class="js-dot">✓</div>
+        <div class="js-label">The Fix</div>
+        <div class="js-text">Restructure around lifetime value, not deal velocity</div>
+      </div>
+    </div>
+
+    <div class="result-row">
+      <div class="result-stat">
+        <div class="big-num">3%</div>
+        <div class="stat-label">Churn in 8 months</div>
+      </div>
+      <div class="result-lesson">
+        <strong>Below their original baseline.</strong> Lower prices, more features, extra headcount — all would've failed. The 5 Whys found the real lever: an org optimized for the wrong metric. Fixing the root cause improved unit economics across the board — no band-aids required.
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-left">
+      <div class="handle">Root Cause Framework for Marketers</div>
+      Best used in: leadership discussions · post-mortems · strategic planning · retrospectives
+    </div>
+    <div class="footer-right">
+      <div class="prompt-tag">Why is this a priority now?</div>
+      <div class="prompt-tag">Why do we assume this will work?</div>
+      <div class="prompt-tag">Why haven't we solved this before?</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
